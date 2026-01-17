@@ -1,0 +1,5 @@
+/* Import modular CSS files */
+@import './theme.css';
+@import './components.css';
+@import './forms.css';
+@import './animations.css';

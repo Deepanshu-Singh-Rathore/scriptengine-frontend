@@ -1,0 +1,290 @@
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import { useAuth } from './AuthContext'
+import Login from './Login'
+import PreviewSection from './PreviewSection'
+import './login.css'
+import './user-menu.css'
+import './App.css'
+
+function App() {
+  const { user, logout, loading: authLoading } = useAuth()
+  const [userInput, setUserInput] = useState('')
+  const [fileType, setFileType] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+  const [activeTab, setActiveTab] = useState('script')
+  const [theme, setTheme] = useState('dark')
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark'
+    setTheme(savedTheme)
+    document.documentElement.setAttribute('data-theme', savedTheme)
+  }, [])
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    localStorage.setItem('theme', newTheme)
+    document.documentElement.setAttribute('data-theme', newTheme)
+  }
+
+  // Show login page if not authenticated
+  if (authLoading) {
+    return <div className="loading-container"><div className="spinner"></div></div>
+  }
+
+  if (!user) {
+    return <Login />
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    setActiveTab('script')
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/scripts/generate', {
+        user_input: userInput,
+        file_type: fileType || null,
+        schema_info: null
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      setResult(response.data)
+    } catch (err) {
+      setError(err.response?.data?.detail || err.message || 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    const btn = event.target
+    const originalText = btn.textContent
+    btn.textContent = '✓ Copied!'
+    setTimeout(() => {
+      btn.textContent = originalText
+    }, 2000)
+  }
+
+  const getActiveContent = () => {
+    if (!result) return ''
+
+    switch (activeTab) {
+      case 'script':
+        return result.script_content
+      case 'config':
+        return result.config_content || 'No config file available for this script type.'
+      case 'usage':
+        return result.usage_instructions || 'No usage instructions available.'
+      default:
+        return ''
+    }
+  }
+
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="header-content">
+          <div className="logo">
+            <div className="logo-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            </div>
+            <div>
+              <h1>Conversion AI</h1>
+              <p className="tagline">AI-Powered Script Generator</p>
+            </div>
+          </div>
+
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+            {theme === 'dark' ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+          </button>
+
+          <div className="user-menu">
+            <span className="user-email">{user.email}</span>
+            <button onClick={logout} className="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="main-content">
+        <div className="card">
+          <h2 className="card-title">Generate Script</h2>
+          <form onSubmit={handleSubmit} className="form">
+            <div className="form-group">
+              <label htmlFor="userInput">What do you want to do?</label>
+              <textarea
+                id="userInput"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                placeholder="e.g., rename column hero to jher, normalize csv data, convert xlsx to csv..."
+                required
+                rows="4"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="fileType">File Type (optional)</label>
+                <input
+                  id="fileType"
+                  type="text"
+                  value={fileType}
+                  onChange={(e) => setFileType(e.target.value)}
+                  placeholder="csv, xlsx"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                  Generate Script
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {error && (
+          <div className="alert alert-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
+        )}
+
+        {loading && (
+          <div className="loading-container">
+            <div className="ai-loader">
+              <div className="ai-brain">
+                <div className="neuron"></div>
+                <div className="neuron"></div>
+                <div className="neuron"></div>
+                <div className="neuron"></div>
+              </div>
+              <p className="loading-text">AI is generating your script...</p>
+              <div className="loading-bar">
+                <div className="loading-progress"></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {result && !loading && (
+          <>
+            <div className="card">
+              <div className="card-header">
+                <div>
+                  <h2 className="card-title">Generated Script</h2>
+                  <span className={`badge ${result.reused ? 'badge-success' : 'badge-primary'}`}>
+                    {result.reused ? `✓ Reused (${(result.similarity * 100).toFixed(1)}% match)` : '✨ Newly Generated'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(getActiveContent())}
+                  className="btn btn-secondary btn-sm"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copy {activeTab === 'script' ? 'Code' : activeTab === 'config' ? 'Config' : 'Instructions'}
+                </button>
+              </div>
+
+              {result.repo_path && (
+                <p className="file-path">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                    <polyline points="13 2 13 9 20 9" />
+                  </svg>
+                  {result.repo_path}
+                </p>
+              )}
+
+              <div className="tabs">
+                <button
+                  className={`tab ${activeTab === 'script' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('script')}
+                >
+                  📄 Script
+                </button>
+                {result.config_content && (
+                  <button
+                    className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('config')}
+                  >
+                    ⚙️ Config
+                  </button>
+                )}
+                {result.usage_instructions && (
+                  <button
+                    className={`tab ${activeTab === 'usage' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('usage')}
+                  >
+                    📖 Usage
+                  </button>
+                )}
+              </div>
+
+              <div className="code-block">
+                <pre style={{ whiteSpace: activeTab === 'usage' ? 'pre-wrap' : 'pre' }}>
+                  {getActiveContent()}
+                </pre>
+              </div>
+            </div>
+
+            <PreviewSection result={result} />
+          </>
+        )}
+      </main>
+    </div>
+  )
+}
+
+export default App
