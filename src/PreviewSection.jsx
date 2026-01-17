@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 function PreviewSection({ result }) {
     const [uploadedFile, setUploadedFile] = useState(null)
     const [startRow, setStartRow] = useState(0)
@@ -75,7 +77,7 @@ function PreviewSection({ result }) {
             formData.append('start_row', startRow)
 
             const response = await axios.post(
-                'http://localhost:8000/api/scripts/preview',
+                `${API_URL}/api/scripts/preview`,
                 formData,
                 {
                     headers: {

@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { useAuth } from './AuthContext'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -15,7 +17,7 @@ function Login() {
         setError(null)
 
         try {
-            const response = await axios.post('http://localhost:8000/api/auth/login', {
+            const response = await axios.post(`${API_URL}/api/auth/login`, {
                 email,
                 password
             })
