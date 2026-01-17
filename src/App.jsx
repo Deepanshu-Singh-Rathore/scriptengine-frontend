@@ -70,12 +70,42 @@ function App() {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
-    const btn = event.target
-    const originalText = btn.textContent
-    btn.textContent = '✓ Copied!'
-    setTimeout(() => {
-      btn.textContent = originalText
-    }, 2000)
+    alert('Copied to clipboard!')
+  }
+
+  const handleExport = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/api/scripts/export`, {
+        script_content: result.script_content,
+        user_input: userInput,
+        file_type: fileType
+      }, {
+        responseType: 'blob'
+      })
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+
+      // Extract filename from Content-Disposition header or use default
+      const contentDisposition = response.headers['content-disposition']
+      let filename = 'script_engine.py'
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/)
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      link.setAttribute('download', filename)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError('Failed to export script. Please try again.')
+    }
   }
 
   const getActiveContent = () => {
@@ -257,16 +287,29 @@ function App() {
                     {result.reused ? `✓ Reused (${(result.similarity * 100).toFixed(1)}% match)` : '✨ Newly Generated'}
                   </span>
                 </div>
-                <button
-                  onClick={() => copyToClipboard(getActiveContent())}
-                  className="btn btn-secondary btn-sm"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                  Copy {activeTab === 'script' ? 'Code' : activeTab === 'config' ? 'Config' : 'Instructions'}
-                </button>
+                <div className="header-button-group">
+                  <button
+                    onClick={() => copyToClipboard(getActiveContent())}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    Copy {activeTab === 'script' ? 'Code' : activeTab === 'config' ? 'Config' : 'Instructions'}
+                  </button>
+                  <button
+                    onClick={handleExport}
+                    className="btn btn-primary btn-sm"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Download .py
+                  </button>
+                </div>
               </div>
 
               {result.repo_path && (

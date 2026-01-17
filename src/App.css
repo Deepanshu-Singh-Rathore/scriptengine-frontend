@@ -1,1 +1,7 @@
 /* Additional component-specific styles */
+
+.header-button-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
