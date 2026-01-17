@@ -78,7 +78,8 @@ function App() {
       const response = await axios.post(`${API_URL}/api/scripts/export`, {
         script_content: result.script_content,
         user_input: userInput,
-        file_type: fileType
+        file_type: fileType,
+        config_content: result.config_content || null
       }, {
         responseType: 'blob'
       })
@@ -307,7 +308,7 @@ function App() {
                       <polyline points="7 10 12 15 17 10" />
                       <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
-                    Download .py
+                    Download {result.config_content ? '.zip' : '.py'}
                   </button>
                 </div>
               </div>
