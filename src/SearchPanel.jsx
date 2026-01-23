@@ -4,8 +4,19 @@ import './SearchPanel.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+// Script type filters for search (based on database script_type values)
+const SCRIPT_TYPE_FILTERS = [
+    { id: '', name: 'All Script Types' },
+    { id: 'csv_etl', name: '� CSV ETL' },
+    { id: 'xlsx_etl', name: '� XLSX ETL' },
+    { id: 'csv_to_xlsx', name: '⬆️ CSV to XLSX' },
+    { id: 'xlsx_to_csv', name: '⬇️ XLSX to CSV' },
+    { id: 'csv_to_bq', name: '☁️ CSV to BQ Load' }
+]
+
 function SearchPanel({ onScriptSelect }) {
     const [query, setQuery] = useState('')
+    const [templateFilter, setTemplateFilter] = useState('')
     const [results, setResults] = useState([])
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
@@ -19,6 +30,7 @@ function SearchPanel({ onScriptSelect }) {
         try {
             const response = await axios.post(`${API_URL}/api/scripts/search`, {
                 query: query.trim(),
+                script_type: templateFilter || null,
                 limit: 10
             })
             setResults(response.data.results)
@@ -44,6 +56,17 @@ function SearchPanel({ onScriptSelect }) {
     return (
         <div className="search-panel">
             <form onSubmit={handleSearch} className="search-form">
+                <div className="search-filter-row">
+                    <select
+                        value={templateFilter}
+                        onChange={(e) => setTemplateFilter(e.target.value)}
+                        className="template-filter-select"
+                    >
+                        {SCRIPT_TYPE_FILTERS.map(opt => (
+                            <option key={opt.id} value={opt.id}>{opt.name}</option>
+                        ))}
+                    </select>
+                </div>
                 <div className="search-input-wrapper">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="11" cy="11" r="8" />
