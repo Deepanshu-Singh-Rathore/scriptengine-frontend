@@ -5,3 +5,23 @@
   gap: 0.5rem;
   align-items: center;
 }
+
+.card-description {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  margin-bottom: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.step-divider {
+  margin: 1.5rem 0 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.step-title {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin: 0;
+}

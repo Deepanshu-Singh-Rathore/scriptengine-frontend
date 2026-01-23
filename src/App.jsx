@@ -3,6 +3,9 @@ import axios from 'axios'
 import { useAuth } from './AuthContext'
 import Login from './Login'
 import PreviewSection from './PreviewSection'
+import ModeSelector from './ModeSelector'
+import TemplateSelector from './TemplateSelector'
+import SearchPanel from './SearchPanel'
 import './login.css'
 import './user-menu.css'
 import './App.css'
@@ -11,6 +14,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function App() {
   const { user, logout, loading: authLoading } = useAuth()
+  const [mode, setMode] = useState('create')  // 'search' or 'create'
+  const [selectedTemplate, setSelectedTemplate] = useState('csv_etl')
   const [userInput, setUserInput] = useState('')
   const [fileType, setFileType] = useState('')
   const [loading, setLoading] = useState(false)
@@ -52,6 +57,7 @@ function App() {
     try {
       const response = await axios.post(`${API_URL}/api/scripts/generate`, {
         user_input: userInput,
+        template_id: selectedTemplate,
         file_type: fileType || null,
         schema_info: null
       }, {
@@ -204,158 +210,178 @@ function App() {
       </header>
 
       <main className="main-content">
-        <div className="card">
-          <h2 className="card-title">Generate Script</h2>
-          <form onSubmit={handleSubmit} className="form">
-            <div className="form-group">
-              <label htmlFor="userInput">What do you want to do?</label>
-              <textarea
-                id="userInput"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="e.g., rename column hero to jher, normalize csv data, convert xlsx to csv..."
-                required
-                rows="4"
-              />
-            </div>
+        <ModeSelector mode={mode} onModeChange={setMode} />
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="fileType">File Type (optional)</label>
-                <input
-                  id="fileType"
-                  type="text"
-                  value={fileType}
-                  onChange={(e) => setFileType(e.target.value)}
-                  placeholder="csv, xlsx"
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                  </svg>
-                  Generate Script
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {error && (
-          <div className="alert alert-error">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            {error}
+        {mode === 'search' && (
+          <div className="card">
+            <h2 className="card-title">🔍 Search Approved Scripts</h2>
+            <p className="card-description">Find and reuse existing scripts from the approved library</p>
+            <SearchPanel onScriptSelect={(script) => {
+              // When user selects a script from search, display it
+              setResult({
+                script_type: script.script_type,
+                script_content: `# Script loaded from: ${script.repo_path}\n# Similarity: ${(script.similarity * 100).toFixed(1)}%\n\n# Use the approved-scripts folder to view full script`,
+                reused: true,
+                similarity: script.similarity,
+                repo_path: script.repo_path
+              })
+              setMode('create')  // Switch to create mode to show result
+            }} />
           </div>
         )}
 
-        {loading && (
-          <div className="loading-container">
-            <div className="ai-loader">
-              <div className="ai-brain">
-                <div className="neuron"></div>
-                <div className="neuron"></div>
-                <div className="neuron"></div>
-                <div className="neuron"></div>
-              </div>
-              <p className="loading-text">AI is generating your script...</p>
-              <div className="loading-bar">
-                <div className="loading-progress"></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {result && !loading && (
+        {mode === 'create' && (
           <>
             <div className="card">
-              <div className="card-header">
-                <div>
-                  <h2 className="card-title">Generated Script</h2>
-                  <span className={`badge ${result.reused ? 'badge-success' : 'badge-primary'}`}>
-                    {result.reused ? `✓ Reused (${(result.similarity * 100).toFixed(1)}% match)` : '✨ Newly Generated'}
-                  </span>
-                </div>
-                <div className="header-button-group">
-                  <button
-                    onClick={() => copyToClipboard(getActiveContent())}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                    Copy {activeTab === 'script' ? 'Code' : activeTab === 'config' ? 'Config' : 'Instructions'}
-                  </button>
-                  <button
-                    onClick={handleExport}
-                    className="btn btn-primary btn-sm"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Download {result.config_content ? '.zip' : '.py'}
-                  </button>
-                </div>
+              <h2 className="card-title">✨ Create New Script</h2>
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelect={setSelectedTemplate}
+              />
+
+              <div className="step-divider">
+                <h3 className="step-title">Step 2: Describe Your Transformation</h3>
               </div>
 
-              {result.repo_path && (
-                <p className="file-path">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-                    <polyline points="13 2 13 9 20 9" />
-                  </svg>
-                  {result.repo_path}
-                </p>
-              )}
+              <form onSubmit={handleSubmit} className="form">
+                <div className="form-group">
+                  <label htmlFor="userInput">What do you want to do?</label>
+                  <textarea
+                    id="userInput"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder="e.g., add a new column with today's date, filter rows where status is active..."
+                    required
+                    rows="4"
+                  />
+                </div>
 
-              <div className="tabs">
-                <button
-                  className={`tab ${activeTab === 'script' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('script')}
-                >
-                  📄 Script
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <span className="spinner"></span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                      </svg>
+                      Generate Script
+                    </>
+                  )}
                 </button>
-                {result.config_content && (
-                  <button
-                    className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
-                    onClick={() => setActiveTab('config')}
-                  >
-                    ⚙️ Config
-                  </button>
-                )}
-                {result.usage_instructions && (
-                  <button
-                    className={`tab ${activeTab === 'usage' ? 'tab-active' : ''}`}
-                    onClick={() => setActiveTab('usage')}
-                  >
-                    📖 Usage
-                  </button>
-                )}
-              </div>
-
-              <div className="code-block">
-                <pre style={{ whiteSpace: activeTab === 'usage' ? 'pre-wrap' : 'pre' }}>
-                  {getActiveContent()}
-                </pre>
-              </div>
+              </form>
             </div>
 
-            <PreviewSection result={result} />
+            {error && (
+              <div className="alert alert-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            {loading && (
+              <div className="loading-container">
+                <div className="ai-loader">
+                  <div className="ai-brain">
+                    <div className="neuron"></div>
+                    <div className="neuron"></div>
+                    <div className="neuron"></div>
+                    <div className="neuron"></div>
+                  </div>
+                  <p className="loading-text">AI is generating your script...</p>
+                  <div className="loading-bar">
+                    <div className="loading-progress"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {result && !loading && (
+              <>
+                <div className="card">
+                  <div className="card-header">
+                    <div>
+                      <h2 className="card-title">Generated Script</h2>
+                      <span className={`badge ${result.reused ? 'badge-success' : 'badge-primary'}`}>
+                        {result.reused ? `✓ Reused (${(result.similarity * 100).toFixed(1)}% match)` : '✨ Newly Generated'}
+                      </span>
+                    </div>
+                    <div className="header-button-group">
+                      <button
+                        onClick={() => copyToClipboard(getActiveContent())}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        Copy {activeTab === 'script' ? 'Code' : activeTab === 'config' ? 'Config' : 'Instructions'}
+                      </button>
+                      <button
+                        onClick={handleExport}
+                        className="btn btn-primary btn-sm"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download {result.config_content ? '.zip' : '.py'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {result.repo_path && (
+                    <p className="file-path">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                        <polyline points="13 2 13 9 20 9" />
+                      </svg>
+                      {result.repo_path}
+                    </p>
+                  )}
+
+                  <div className="tabs">
+                    <button
+                      className={`tab ${activeTab === 'script' ? 'tab-active' : ''}`}
+                      onClick={() => setActiveTab('script')}
+                    >
+                      📄 Script
+                    </button>
+                    {result.config_content && (
+                      <button
+                        className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('config')}
+                      >
+                        ⚙️ Config
+                      </button>
+                    )}
+                    {result.usage_instructions && (
+                      <button
+                        className={`tab ${activeTab === 'usage' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('usage')}
+                      >
+                        📖 Usage
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="code-block">
+                    <pre style={{ whiteSpace: activeTab === 'usage' ? 'pre-wrap' : 'pre' }}>
+                      {getActiveContent()}
+                    </pre>
+                  </div>
+                </div>
+
+                <PreviewSection result={result} />
+              </>
+            )}
           </>
         )}
       </main>
