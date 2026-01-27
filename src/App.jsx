@@ -40,7 +40,22 @@ function App() {
 
   // Show login page if not authenticated
   if (authLoading) {
-    return <div className="loading-container"><div className="spinner"></div></div>
+    return (
+      <div className="loading-modal-overlay" style={{ position: 'fixed', inset: 0 }}>
+        <div className="loading-modal">
+          <div className="siri-orb-container">
+            <div className="siri-ring"></div>
+            <div className="siri-ring"></div>
+            <div className="siri-ring"></div>
+            <div className="siri-orb"></div>
+          </div>
+          <div className="loading-modal-text">
+            Loading
+            <div className="loading-modal-subtext">Initializing...</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -248,9 +263,19 @@ function App() {
             </div>
 
             {loading && (
-              <div className="loading-container">
-                <div className="spinner"></div>
-                <p>Loading script...</p>
+              <div className="loading-modal-overlay">
+                <div className="loading-modal">
+                  <div className="siri-orb-container">
+                    <div className="siri-ring"></div>
+                    <div className="siri-ring"></div>
+                    <div className="siri-ring"></div>
+                    <div className="siri-orb"></div>
+                  </div>
+                  <div className="loading-modal-text">
+                    Loading Script
+                    <div className="loading-modal-subtext">Please wait...</div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -404,17 +429,17 @@ function App() {
             )}
 
             {loading && (
-              <div className="loading-container">
-                <div className="ai-loader">
-                  <div className="ai-brain">
-                    <div className="neuron"></div>
-                    <div className="neuron"></div>
-                    <div className="neuron"></div>
-                    <div className="neuron"></div>
+              <div className="loading-modal-overlay">
+                <div className="loading-modal">
+                  <div className="siri-orb-container">
+                    <div className="siri-ring"></div>
+                    <div className="siri-ring"></div>
+                    <div className="siri-ring"></div>
+                    <div className="siri-orb"></div>
                   </div>
-                  <p className="loading-text">AI is generating your script...</p>
-                  <div className="loading-bar">
-                    <div className="loading-progress"></div>
+                  <div className="loading-modal-text">
+                    Generating Script
+                    <div className="loading-modal-subtext">AI is creating your script...</div>
                   </div>
                 </div>
               </div>

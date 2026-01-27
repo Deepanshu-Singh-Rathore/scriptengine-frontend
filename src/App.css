@@ -25,3 +25,243 @@
   font-weight: 600;
   margin: 0;
 }
+
+/* Siri-style Loading Modal */
+.loading-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loading-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Siri Orb */
+.siri-orb-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  perspective: 1000px;
+}
+
+.siri-orb {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  transform-style: preserve-3d;
+  
+  /* Base gradient - the colorful shifting background */
+  background: 
+    radial-gradient(
+      ellipse 80% 50% at 30% 20%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 70% 80%,
+      rgba(99, 102, 241, 0.4) 0%,
+      transparent 50%
+    ),
+    linear-gradient(
+      135deg,
+      #667eea 0%,
+      #764ba2 20%,
+      #f093fb 40%,
+      #f5576c 60%,
+      #4facfe 80%,
+      #667eea 100%
+    );
+  background-size: 100% 100%, 100% 100%, 300% 300%;
+  animation: siriGradient 4s ease infinite, siriFloat 3s ease-in-out infinite;
+  
+  /* 3D depth with multiple layered shadows */
+  box-shadow:
+    /* Inner glow for depth */
+    inset 0 -20px 40px rgba(0, 0, 0, 0.3),
+    inset 0 20px 40px rgba(255, 255, 255, 0.15),
+    inset 0 0 60px rgba(139, 92, 246, 0.3),
+    /* Outer glow layers */
+    0 0 20px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.3),
+    0 0 60px rgba(236, 72, 153, 0.25),
+    0 0 80px rgba(99, 102, 241, 0.2),
+    0 0 100px rgba(245, 87, 108, 0.15),
+    /* Drop shadow for 3D lift */
+    0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Specular highlight - the glossy top reflection */
+.siri-orb::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 15%;
+  width: 50%;
+  height: 35%;
+  border-radius: 50%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  animation: highlightShift 4s ease-in-out infinite;
+}
+
+/* Secondary reflection - bottom refraction */
+.siri-orb::after {
+  content: '';
+  position: absolute;
+  bottom: 15%;
+  right: 10%;
+  width: 30%;
+  height: 20%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 70%
+  );
+  animation: refractionShift 4s ease-in-out infinite reverse;
+}
+
+@keyframes siriGradient {
+  0%, 100% { background-position: 0% 50%, 0% 50%, 0% 50%; }
+  25% { background-position: 0% 50%, 0% 50%, 50% 100%; }
+  50% { background-position: 0% 50%, 0% 50%, 100% 50%; }
+  75% { background-position: 0% 50%, 0% 50%, 50% 0%; }
+}
+
+@keyframes siriFloat {
+  0%, 100% { 
+    transform: translateY(0) rotateX(0deg) rotateY(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-5px) rotateX(3deg) rotateY(-3deg) scale(1.02);
+  }
+  50% { 
+    transform: translateY(-8px) rotateX(0deg) rotateY(0deg) scale(1.03);
+  }
+  75% {
+    transform: translateY(-5px) rotateX(-3deg) rotateY(3deg) scale(1.02);
+  }
+}
+
+@keyframes highlightShift {
+  0%, 100% { 
+    transform: translateX(0) translateY(0);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateX(5px) translateY(2px);
+    opacity: 0.6;
+  }
+}
+
+@keyframes refractionShift {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+/* Pulsing rings around orb */
+.siri-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid;
+  border-color: rgba(139, 92, 246, 0.3);
+  animation: ringPulse 2.5s ease-out infinite;
+  box-shadow: 
+    0 0 10px rgba(139, 92, 246, 0.2),
+    inset 0 0 10px rgba(236, 72, 153, 0.1);
+}
+
+.siri-ring:nth-child(1) {
+  width: 160px;
+  height: 160px;
+  animation-delay: 0s;
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.siri-ring:nth-child(2) {
+  width: 190px;
+  height: 190px;
+  animation-delay: 0.5s;
+  border-color: rgba(236, 72, 153, 0.3);
+}
+
+.siri-ring:nth-child(3) {
+  width: 220px;
+  height: 220px;
+  animation-delay: 1s;
+  border-color: rgba(245, 87, 108, 0.25);
+}
+
+@keyframes ringPulse {
+  0% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 
+      0 0 15px rgba(139, 92, 246, 0.3),
+      inset 0 0 15px rgba(236, 72, 153, 0.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.1),
+      inset 0 0 20px rgba(236, 72, 153, 0.05);
+  }
+}
+
+/* Loading text */
+.loading-modal-text {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+.loading-modal-subtext {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 400;
+  margin-top: 0.5rem;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
