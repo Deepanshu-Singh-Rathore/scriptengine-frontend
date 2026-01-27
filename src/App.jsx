@@ -214,35 +214,138 @@ function App() {
         <ModeSelector mode={mode} onModeChange={setMode} />
 
         {mode === 'search' && (
-          <div className="card">
-            <h2 className="card-title">🔍 Search Approved Scripts</h2>
-            <p className="card-description">Find and reuse existing scripts from the approved library</p>
-            <SearchPanel onScriptSelect={async (script) => {
-              // Fetch full script content from backend
-              setLoading(true)
-              try {
-                const response = await axios.post(`${API_URL}/api/scripts/get_script`, {
-                  repo_path: script.repo_path,
-                  script_type: script.script_type
-                })
-                setResult({
-                  script_type: response.data.script_type,
-                  script_content: response.data.script_content,
-                  reused: true,
-                  similarity: script.similarity,
-                  repo_path: response.data.repo_path,
-                  config_content: response.data.config_content,
-                  usage_instructions: response.data.usage_instructions
-                })
-                setMode('create')  // Switch to create mode to show result
-              } catch (err) {
-                setError('Failed to load script content. Please try again.')
-                console.error('Failed to fetch script:', err)
-              } finally {
-                setLoading(false)
-              }
-            }} />
-          </div>
+          <>
+            <div className="card">
+              <h2 className="card-title">🔍 Search Approved Scripts</h2>
+              <p className="card-description">Find and reuse existing scripts from the approved library</p>
+              <SearchPanel onScriptSelect={async (script) => {
+                // Fetch full script content from backend
+                setLoading(true)
+                setError(null)
+                try {
+                  const response = await axios.post(`${API_URL}/api/scripts/get_script`, {
+                    repo_path: script.repo_path,
+                    script_type: script.script_type
+                  })
+                  setResult({
+                    script_type: response.data.script_type,
+                    script_content: response.data.script_content,
+                    reused: true,
+                    similarity: script.similarity,
+                    repo_path: response.data.repo_path,
+                    config_content: response.data.config_content,
+                    usage_instructions: response.data.usage_instructions
+                  })
+                  setActiveTab('script')
+                  // Stay on search page - don't switch modes
+                } catch (err) {
+                  setError('Failed to load script content. Please try again.')
+                  console.error('Failed to fetch script:', err)
+                } finally {
+                  setLoading(false)
+                }
+              }} />
+            </div>
+
+            {loading && (
+              <div className="loading-container">
+                <div className="spinner"></div>
+                <p>Loading script...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="alert alert-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {error}
+              </div>
+            )}
+
+            {result && !loading && (
+              <>
+                <div className="card">
+                  <div className="card-header">
+                    <div>
+                      <h2 className="card-title">Approved Script</h2>
+                      <span className="badge badge-success">
+                        ✓ Reused ({(result.similarity * 100).toFixed(1)}% match)
+                      </span>
+                    </div>
+                    <div className="header-button-group">
+                      <button
+                        onClick={() => copyToClipboard(getActiveContent())}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        Copy {({ script: 'Code', config: 'Config', usage: 'Instructions' })[activeTab]}
+                      </button>
+                      <button
+                        onClick={handleExport}
+                        className="btn btn-primary btn-sm"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download {result.config_content ? '.zip' : '.py'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {result.repo_path && (
+                    <p className="file-path">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                        <polyline points="13 2 13 9 20 9" />
+                      </svg>
+                      {result.repo_path}
+                    </p>
+                  )}
+
+                  <div className="tabs">
+                    <button
+                      className={`tab ${activeTab === 'script' ? 'tab-active' : ''}`}
+                      onClick={() => setActiveTab('script')}
+                    >
+                      📄 Script
+                    </button>
+                    {result.config_content && (
+                      <button
+                        className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('config')}
+                      >
+                        ⚙️ Config
+                      </button>
+                    )}
+                    {result.usage_instructions && (
+                      <button
+                        className={`tab ${activeTab === 'usage' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('usage')}
+                      >
+                        📖 Usage
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="code-block">
+                    <pre style={{ whiteSpace: activeTab === 'usage' ? 'pre-wrap' : 'pre' }}>
+                      {getActiveContent()}
+                    </pre>
+                  </div>
+                </div>
+
+                <PreviewSection result={result} />
+              </>
+            )}
+          </>
         )}
 
         {mode === 'create' && (
