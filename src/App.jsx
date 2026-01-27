@@ -217,16 +217,30 @@ function App() {
           <div className="card">
             <h2 className="card-title">🔍 Search Approved Scripts</h2>
             <p className="card-description">Find and reuse existing scripts from the approved library</p>
-            <SearchPanel onScriptSelect={(script) => {
-              // When user selects a script from search, display it
-              setResult({
-                script_type: script.script_type,
-                script_content: `# Script loaded from: ${script.repo_path}\n# Similarity: ${(script.similarity * 100).toFixed(1)}%\n\n# Use the approved-scripts folder to view full script`,
-                reused: true,
-                similarity: script.similarity,
-                repo_path: script.repo_path
-              })
-              setMode('create')  // Switch to create mode to show result
+            <SearchPanel onScriptSelect={async (script) => {
+              // Fetch full script content from backend
+              setLoading(true)
+              try {
+                const response = await axios.post(`${API_URL}/api/scripts/get_script`, {
+                  repo_path: script.repo_path,
+                  script_type: script.script_type
+                })
+                setResult({
+                  script_type: response.data.script_type,
+                  script_content: response.data.script_content,
+                  reused: true,
+                  similarity: script.similarity,
+                  repo_path: response.data.repo_path,
+                  config_content: response.data.config_content,
+                  usage_instructions: response.data.usage_instructions
+                })
+                setMode('create')  // Switch to create mode to show result
+              } catch (err) {
+                setError('Failed to load script content. Please try again.')
+                console.error('Failed to fetch script:', err)
+              } finally {
+                setLoading(false)
+              }
             }} />
           </div>
         )}
