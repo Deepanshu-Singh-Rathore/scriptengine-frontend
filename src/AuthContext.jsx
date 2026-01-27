@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react'
+import React, { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react'
+import PropTypes from 'prop-types'
 
 const AuthContext = createContext(null)
 
@@ -19,25 +20,37 @@ export function AuthProvider({ children }) {
         setLoading(false)
     }, [])
 
-    const login = (token, email) => {
-        localStorage.setItem('token', token)
+    const login = useCallback((tokenValue, email) => {
+        localStorage.setItem('token', tokenValue)
         localStorage.setItem('user', JSON.stringify({ email }))
-        setToken(token)
+        setToken(tokenValue)
         setUser({ email })
-    }
+    }, [])
 
-    const logout = () => {
+    const logout = useCallback(() => {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         setToken(null)
         setUser(null)
-    }
+    }, [])
+
+    const value = useMemo(() => ({
+        user,
+        token,
+        login,
+        logout,
+        loading
+    }), [user, token, login, logout, loading])
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )
+}
+
+AuthProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 }
 
 export function useAuth() {

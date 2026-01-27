@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import './ModeSelector.css'
 
 function ModeSelector({ mode, onModeChange }) {
@@ -24,6 +25,11 @@ function ModeSelector({ mode, onModeChange }) {
             </button>
         </div>
     )
+}
+
+ModeSelector.propTypes = {
+    mode: PropTypes.oneOf(['search', 'create']).isRequired,
+    onModeChange: PropTypes.func.isRequired
 }
 
 export default ModeSelector

@@ -17,7 +17,7 @@ function App() {
   const [mode, setMode] = useState('create')  // 'search' or 'create'
   const [selectedTemplate, setSelectedTemplate] = useState('csv_etl')
   const [userInput, setUserInput] = useState('')
-  const [fileType, setFileType] = useState('')
+  const [fileType] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -28,14 +28,14 @@ function App() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark'
     setTheme(savedTheme)
-    document.documentElement.setAttribute('data-theme', savedTheme)
+    document.documentElement.dataset.theme = savedTheme
   }, [])
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     localStorage.setItem('theme', newTheme)
-    document.documentElement.setAttribute('data-theme', newTheme)
+    document.documentElement.dataset.theme = newTheme
   }
 
   // Show login page if not authenticated
@@ -91,7 +91,7 @@ function App() {
       })
 
       // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const url = globalThis.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
 
@@ -100,7 +100,7 @@ function App() {
       let filename = 'script_engine.py'
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="([^"]+)"/)
-        if (filenameMatch && filenameMatch[1]) {
+        if (filenameMatch?.[1]) {
           filename = filenameMatch[1]
         }
       }
@@ -109,8 +109,9 @@ function App() {
       document.body.appendChild(link)
       link.click()
       link.remove()
-      window.URL.revokeObjectURL(url)
+      globalThis.URL.revokeObjectURL(url)
     } catch (err) {
+      console.error('Export failed:', err)
       setError('Failed to export script. Please try again.')
     }
   }
@@ -259,7 +260,7 @@ function App() {
                 <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? (
                     <>
-                      <span className="spinner"></span>
+                      <span className="spinner"></span>{' '}
                       Generating...
                     </>
                   ) : (
@@ -321,7 +322,7 @@ function App() {
                           <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                         </svg>
-                        Copy {activeTab === 'script' ? 'Code' : activeTab === 'config' ? 'Config' : 'Instructions'}
+                        Copy {({ script: 'Code', config: 'Config', usage: 'Instructions' })[activeTab]}
                       </button>
                       <button
                         onClick={handleExport}

@@ -83,7 +83,7 @@ function Login() {
                     <button type="submit" className="btn btn-primary" disabled={loading}>
                         {loading ? (
                             <>
-                                <span className="spinner"></span>
+                                <span className="spinner"></span>{' '}
                                 Signing in...
                             </>
                         ) : (
