@@ -127,7 +127,7 @@ function SearchPanel({ onScriptSelect }) {
                                         <path d="M5 12h14" />
                                         <path d="m12 5 7 7-7 7" />
                                     </svg>
-                                    Use This Script
+                                    Open
                                 </button>
                             </div>
                         ))}

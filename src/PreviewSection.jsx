@@ -95,7 +95,14 @@ function PreviewSection({ result }) {
         }
     }
 
-    if (result.reused) return null
+    // Check if script has a compatible function (convert or transform) for preview
+    const hasPreviewableFunction = (scriptContent) => {
+        if (!scriptContent) return false
+        return /def (convert|transform)\(df/.test(scriptContent)
+    }
+
+    // Only show preview section if script has a compatible function
+    if (!hasPreviewableFunction(result?.script_content)) return null
 
     return (
         <>
