@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 import './SearchPanel.css'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { API_URL } from './config'
 
 // Script type filters for search (based on database script_type values)
 const SCRIPT_TYPE_FILTERS = [

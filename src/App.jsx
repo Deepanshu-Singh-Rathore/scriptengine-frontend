@@ -9,8 +9,7 @@ import SearchPanel from './SearchPanel'
 import './login.css'
 import './user-menu.css'
 import './App.css'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { API_URL } from './config'
 
 function App() {
   const { user, logout, loading: authLoading } = useAuth()
