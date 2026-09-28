@@ -3,52 +3,54 @@ import axios from 'axios'
 import './TemplateSelector.css'
 import { API_URL } from './config'
 
+const DEFAULT_TEMPLATES = [
+    {
+        id: 'csv_etl',
+        name: 'CSV ETL',
+        description: 'Transform CSV files - add columns, filter rows, clean data',
+        icon: '📄',
+        examples: ['Add a new column with date', 'Filter rows by status']
+    },
+    {
+        id: 'xlsx_etl',
+        name: 'XLSX ETL',
+        description: 'Transform Excel files with formatting support',
+        icon: '📊',
+        examples: ['Merge columns', 'Add summary row']
+    },
+    {
+        id: 'xlsx_to_csv',
+        name: 'XLSX to CSV',
+        description: 'Convert Excel to CSV with transformations',
+        icon: '⬇️',
+        examples: ['Convert first sheet', 'Export with semicolon']
+    },
+    {
+        id: 'csv_to_xlsx',
+        name: 'CSV to XLSX',
+        description: 'Convert CSV to Excel with styling',
+        icon: '⬆️',
+        examples: ['Create styled report', 'Add Excel formatting']
+    }
+]
+
 function TemplateSelector({ selectedTemplate, onSelect }) {
-    const [templates, setTemplates] = useState([])
-    const [loading, setLoading] = useState(true)
+    const [templates, setTemplates] = useState(DEFAULT_TEMPLATES)
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         const fetchTemplates = async () => {
             try {
                 const response = await axios.get(`${API_URL}/api/templates`)
-                setTemplates(response.data)
+                if (response.data && response.data.length > 0) {
+                    setTemplates(response.data)
+                }
             } catch (err) {
-                console.error('Failed to fetch templates:', err)
-                // Use default templates if API fails
-                setTemplates([
-                    {
-                        id: 'csv_etl',
-                        name: 'CSV ETL',
-                        description: 'Transform CSV files - add columns, filter rows, clean data',
-                        icon: '📄',
-                        examples: ['Add a new column with date', 'Filter rows by status']
-                    },
-                    {
-                        id: 'xlsx_etl',
-                        name: 'XLSX ETL',
-                        description: 'Transform Excel files with formatting support',
-                        icon: '📊',
-                        examples: ['Merge columns', 'Add summary row']
-                    },
-                    {
-                        id: 'xlsx_to_csv',
-                        name: 'XLSX to CSV',
-                        description: 'Convert Excel to CSV with transformations',
-                        icon: '⬇️',
-                        examples: ['Convert first sheet', 'Export with semicolon']
-                    },
-                    {
-                        id: 'csv_to_xlsx',
-                        name: 'CSV to XLSX',
-                        description: 'Convert CSV to Excel with styling',
-                        icon: '⬆️',
-                        examples: ['Create styled report', 'Add Excel formatting']
-                    }
-                ])
-            } finally {
-                setLoading(false)
+                // Silently keep default templates if backend is starting up
+                console.log('Using default templates (backend warming up)')
             }
         }
+
         fetchTemplates()
     }, [])
 
