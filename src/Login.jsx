@@ -4,8 +4,10 @@ import { useAuth } from './AuthContext'
 import { API_URL } from './config'
 
 function Login() {
+    const [isSignUp, setIsSignUp] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
     const [isSlow, setIsSlow] = useState(false)
@@ -16,25 +18,46 @@ function Login() {
         axios.get(`${API_URL}/api/health`).catch(() => {})
     }, [])
 
+    const toggleMode = () => {
+        setIsSignUp(!isSignUp)
+        setError(null)
+        setPassword('')
+        setConfirmPassword('')
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setLoading(true)
         setError(null)
+
+        if (isSignUp) {
+            if (password.length < 6) {
+                setError('Password must be at least 6 characters long.')
+                return
+            }
+            if (password !== confirmPassword) {
+                setError('Passwords do not match.')
+                return
+            }
+        }
+
+        setLoading(true)
         setIsSlow(false)
 
         const timer = setTimeout(() => {
             setIsSlow(true)
         }, 3000)
 
+        const endpoint = isSignUp ? `${API_URL}/api/auth/register` : `${API_URL}/api/auth/login`
+
         try {
-            const response = await axios.post(`${API_URL}/api/auth/login`, {
+            const response = await axios.post(endpoint, {
                 email,
                 password
             })
 
             login(response.data.access_token, response.data.email)
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed. Please try again.')
+            setError(err.response?.data?.detail || (isSignUp ? 'Registration failed. Please try again.' : 'Login failed. Please try again.'))
         } finally {
             clearTimeout(timer)
             setLoading(false)
@@ -51,8 +74,8 @@ function Login() {
                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                         </svg>
                     </div>
-                    <h1>Script Engine</h1>
-                    <p>Sign in to continue</p>
+                    <h1>{isSignUp ? 'Create Account' : 'Script Engine'}</h1>
+                    <p>{isSignUp ? 'Sign up to start generating scripts' : 'Sign in to continue'}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="login-form">
@@ -74,7 +97,7 @@ function Login() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="admin@scriptengine.com"
+                            placeholder="you@example.com"
                             required
                             autoFocus
                         />
@@ -87,19 +110,33 @@ function Login() {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder={isSignUp ? 'Create a password (min 6 chars)' : 'Enter your password'}
                             required
                         />
                     </div>
+
+                    {isSignUp && (
+                        <div className="form-group">
+                            <label htmlFor="confirmPassword">Confirm Password</label>
+                            <input
+                                id="confirmPassword"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Re-enter your password"
+                                required
+                            />
+                        </div>
+                    )}
 
                     <button type="submit" className="btn btn-primary" disabled={loading}>
                         {loading ? (
                             <>
                                 <span className="spinner"></span>{' '}
-                                Signing in...
+                                {isSignUp ? 'Creating account...' : 'Signing in...'}
                             </>
                         ) : (
-                            'Sign In'
+                            isSignUp ? 'Create Account' : 'Sign In'
                         )}
                     </button>
 
@@ -109,6 +146,13 @@ function Login() {
                         </p>
                     )}
                 </form>
+
+                <div className="login-toggle">
+                    {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                    <button type="button" onClick={toggleMode}>
+                        {isSignUp ? 'Sign In' : 'Sign Up'}
+                    </button>
+                </div>
             </div>
         </div>
     )

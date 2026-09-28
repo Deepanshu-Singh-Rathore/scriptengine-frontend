@@ -66,8 +66,31 @@
   margin-top: 0.5rem;
 }
 
+.login-toggle {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.login-toggle button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  text-decoration: underline;
+  font-size: 0.875rem;
+}
+
+.login-toggle button:hover {
+  color: var(--primary-hover);
+}
+
 @media (max-width: 480px) {
   .login-card {
     padding: 2rem 1.5rem;
   }
 }
+
